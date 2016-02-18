@@ -1,0 +1,38 @@
+{
+  "name": "cimmwolf/utilities",
+  "description": "Utilities for web development",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Denis Beliaev",
+      "email": "cimmwolf@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "DenisBeliaev\\": "src/"
+    }
+  },
+  "repositories": [
+    {
+      "type": "package",
+      "package": {
+        "name": "emuravjev/mdash",
+        "version": "dev-master",
+        "dist": {
+          "url": "https://github.com/emuravjev/mdash/archive/master.zip",
+          "type": "zip"
+        },
+        "source": {
+          "url": "git@github.com:emuravjev/mdash.git",
+          "type": "git",
+          "reference": "master"
+        }
+      }
+    }
+  ],
+  "require": {
+    "emuravjev/mdash": "dev-master"
+  }
+}
