@@ -4,7 +4,7 @@
  */
 
 namespace DenisBeliaev;
-require_once __DIR__ . '../vendor/emuravjev/mdash/src-php/EMT.php';
+require_once __DIR__ . '/../vendor/emuravjev/mdash/src-php/EMT.php';
 
 class Typograph
 {
@@ -13,7 +13,7 @@ class Typograph
      * @param array $settings Settings for emuravjev/mdash
      * @return string
      */
-    static function file($path, $settings) {
+    static function file($path, $settings = []) {
         ob_start();
         include $path;
         $content = ob_get_contents();
