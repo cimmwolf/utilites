@@ -36,7 +36,7 @@ class Typograph
         ]);
 
 
-        $T = new EMTypograph();
+        $T = new \EMTypograph();
         $T->setup($settings);
         $T->set_text($content);
 
