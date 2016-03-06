@@ -4,17 +4,12 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "2b3206c01fe317973a52b6f155f895ff",
-    "content-hash": "84141439a4586e7db954c07064c6d4df",
+    "hash": "b5437ad6a8fb832d1db6afbba512a450",
+    "content-hash": "e677471447e5fdf7a076a55ca36b34b4",
     "packages": [
         {
             "name": "emuravjev/mdash",
             "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "git@github.com:emuravjev/mdash.git",
-                "reference": "master"
-            },
             "dist": {
                 "type": "zip",
                 "url": "https://github.com/emuravjev/mdash/archive/master.zip",
@@ -22,7 +17,11 @@
                 "shasum": null
             },
             "type": "library",
-            "time": "2015-07-04 20:54:50"
+            "autoload": {
+                "classmap": [
+                    "src-php/EMT.php"
+                ]
+            }
         }
     ],
     "packages-dev": [],

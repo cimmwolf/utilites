@@ -4,7 +4,6 @@
  */
 
 namespace DenisBeliaev;
-require_once __DIR__ . '/../vendor/emuravjev/mdash/src-php/EMT.php';
 
 class Typograph
 {
@@ -37,7 +36,7 @@ class Typograph
         ]);
 
 
-        $T = new \EMTypograph();
+        $T = new EMTypograph();
         $T->setup($settings);
         $T->set_text($content);
 

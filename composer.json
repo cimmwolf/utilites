@@ -24,10 +24,8 @@
           "url": "https://github.com/emuravjev/mdash/archive/master.zip",
           "type": "zip"
         },
-        "source": {
-          "url": "git@github.com:emuravjev/mdash.git",
-          "type": "git",
-          "reference": "master"
+        "autoload": {
+          "classmap": ["src-php/EMT.php"]
         }
       }
     }
