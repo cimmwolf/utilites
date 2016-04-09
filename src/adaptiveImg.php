@@ -9,7 +9,7 @@ namespace DenisBeliaev;
  * Class adaptiveImg
  * @package Utilites
  */
-class adaptiveImg
+class AdaptiveImg
 {
     public $root;
 
