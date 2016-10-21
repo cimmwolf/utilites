@@ -111,8 +111,9 @@ class AdaptiveImg
                 if (is_numeric($maxHeight))
                     $height = round($maxHeight * $multiple);
 
+                $descriptor = number_format($multiple, 1);
                 if ($width <= $this->info[0] AND $height <= $this->info[1])
-                    $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#i', "$1@{$width}x$height.$2 {$multiple}x", $this->url);
+                    $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#i', "$1@{$width}x$height.$2 {$descriptor}x", $this->url);
             }
         }
         return [$src, implode(', ', $srcSet)];
