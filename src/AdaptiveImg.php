@@ -42,38 +42,32 @@ class AdaptiveImg
         }
     }
 
-    /** Create img tag with parameters srcset (type w) and sizes
-     *
-     * @param string $sizes sizes attribute
-     * @param array $widths widths of image
-     * @param array $htmlOptions other attributes of the img tag in attribute => value format
-     * @return string HTML img tag
-     */
-    public function typeW($sizes, $widths, $htmlOptions = [])
+    public static function adapt($tag)
     {
-        $srcSet = [];
-        $maxWidth = $this->info[0];
+        $alt = '';
 
-        foreach ($widths as $width) {
-            $widths[] = $width * 2;
-            $widths[] = $width * 3;
+        preg_match_all('/\s([a-z-]+)=[\'"](.*?)[\'"]/im', $tag, $matches);
+        $options = array_combine($matches[1], $matches[2]);
+
+        foreach (['src', 'sizes', 'alt'] as $att) {
+            if (isset($options[$att])) {
+                ${$att} = $options[$att];
+                unset($options[$att]);
+            }
         }
 
-        if (!in_array($maxWidth, $widths))
-            $widths[] = $maxWidth;
+        if (!isset($src, $sizes) && !isset($src, $options['width']))
+            throw new \Exception('Wrong img tag to adapt', 400);
 
-        $widths = array_unique($widths);
-        sort($widths);
+        $image = new static($src, $alt);
 
-        foreach ($widths as $width)
-            if ($width <= $maxWidth)
-                $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#', "$1@{$width}x-.$2 {$width}w", $this->url);
-        $htmlOptions['srcset'] = implode(', ', $srcSet);
-        $htmlOptions['sizes'] = $sizes;
+        if (!isset($sizes) && isset($options['width']))
+            return $image->typeX($options['width'], '-', $options);
 
-        $attrString = self::generateAttributes($htmlOptions);
+        if (isset($sizes))
+            return $image->typeW($sizes, self::calcWidths($sizes), $options);
 
-        return "<img src=\"$this->url\" alt=\"$this->alt\" $attrString>";
+        return false;
     }
 
     /** Generate img tag with parameter srcset (type x)
@@ -128,5 +122,174 @@ class AdaptiveImg
             $attrString .= "$attr=\"$value\"";
         }
         return $attrString;
+    }
+
+    /** Create img tag with parameters srcset (type w) and sizes
+     *
+     * @param string $sizes sizes attribute
+     * @param array $widths widths of image
+     * @param array $htmlOptions other attributes of the img tag in attribute => value format
+     * @return string HTML img tag
+     */
+    public function typeW($sizes, $widths, $htmlOptions = [])
+    {
+        $srcSet = [];
+        $maxWidth = $this->info[0];
+
+        foreach ($widths as $width) {
+            $widths[] = $width * 2;
+            $widths[] = $width * 3;
+        }
+
+        if (!in_array($maxWidth, $widths))
+            $widths[] = $maxWidth;
+
+        $widths = array_unique($widths);
+        sort($widths);
+
+        foreach ($widths as $width)
+            if ($width <= $maxWidth)
+                $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#', "$1@{$width}x-.$2 {$width}w", $this->url);
+        $htmlOptions['srcset'] = implode(', ', $srcSet);
+        $htmlOptions['sizes'] = $sizes;
+
+        $attrString = self::generateAttributes($htmlOptions);
+
+        return "<img src=\"$this->url\" alt=\"$this->alt\" $attrString>";
+    }
+
+    public static function calcWidths($strValue)
+    {
+        $mediaQueries = self::parseMedia($strValue);
+        $queries = [];
+        $values = [];
+
+        foreach ($mediaQueries as $query) {
+            if (isset($query[1])) {
+                $queries[] = $query[0];
+                $values[] = $query[1];
+            } else
+                $defaultValue = $query[0];
+        }
+
+        $sizes = [320, 375, 480, 568, 667, 768, 1024, 1280, 1366, 1440, 1640, 1920];
+        $widths = [];
+        if (!empty($defaultValue))
+            foreach ($sizes as $size) {
+                $value = $defaultValue;
+
+                foreach ($queries as $key => $query) {
+                    if (self::matchMedia($query, ['width' => $size])) {
+                        $value = $values[$key];
+                        break;
+                    }
+                }
+                $value = preg_replace('/px/i', '', $value);
+                $value = preg_replace('/([\d|\.]+)vw/i', '($1*' . $size . '/100)', $value);
+                $value = preg_replace('/^calc\((.*?)\)$/i', '$1', $value);
+
+                if (!is_numeric($value))
+                    $value = ceil(eval('return' . $value . ';'));
+                $widths[] = (int)ceil($value);
+            }
+
+        $widths = array_unique($widths);
+        sort($widths);
+
+        return $widths;
+    }
+
+    protected static function parseMedia($str)
+    {
+        $queries = explode(',', $str);
+        foreach ($queries as &$query) {
+            $query = trim($query);
+            $query = preg_replace('/(.*?\))\s(.*)/i', '$1||$2', $query);
+            $query = explode('||', $query);
+        }
+        return $queries;
+    }
+
+    protected static function matchMedia($media, $screen = [])
+    {
+        if (strpos($media, ',') !== false)
+            $mql = explode(',', $media);
+        else
+            $mql = [$media];
+
+        $mqIndex = count($mql) - 1;
+        $mqLength = $mqIndex;
+        $mq = null;
+
+        $exprList = null;
+        $expr = null;
+        $match = true;
+
+        if ($media == '')
+            return true;
+
+        do {
+            $mq = $mql[$mqLength - $mqIndex];
+            $exprListStr = $mq;
+
+            if (strpos($exprListStr, ' and ') !== false)
+                $exprList = explode(' and ', $exprListStr);
+            else
+                $exprList = [$exprListStr];
+
+            $exprIndex = count($exprList) - 1;
+
+            if ($match && $exprIndex >= 0 && $exprListStr !== '') {
+                do {
+                    preg_match('/^\s*\(\s*(-[a-z]+-)?(min-|max-)?([a-z\-]+)\s*(:?\s*([0-9]+(\.[0-9]+)?|portrait|landscape)(px|em|dppx|dpcm|rem|%|in|cm|mm|ex|pt|pc|\/([0-9]+(\.[0-9]+)?))?)?\s*\)\s*$/', $exprList[$exprIndex], $expr);
+
+                    if (empty($expr) || empty($screen[$expr[3]])) {
+                        $match = false;
+                        break;
+                    }
+
+                    $prefix = $expr[2];
+                    $length = $expr[5];
+                    $value = $length;
+                    $unit = $expr[7];
+                    $feature = $screen[$expr[3]];
+
+//                echo 'prefix =' . $prefix . PHP_EOL;
+//                echo 'value = ' . $value . PHP_EOL;
+//                echo 'unit = ' . $unit . PHP_EOL;
+//                echo 'feature = ' . $feature . PHP_EOL;
+
+
+                    if ($unit && $unit === 'px')
+                        $value = $length;
+
+                    // Test for prefix min or max
+                    // Test value against feature
+                    if ($prefix === 'min-' && $value) {
+                        $match = $feature >= $value;
+                    } else if ($prefix === 'max-' && $value) {
+                        $match = $feature <= $value;
+                    } else if ($value) {
+                        $match = $feature === $value;
+                    } else {
+                        $match = !!$feature;
+                    }
+
+                    // If 'match' is false, break loop
+                    // Continue main loop through query list
+                    if (!$match) {
+                        break;
+                    }
+                } while ($exprIndex--);
+            }
+
+            // If match is true, break loop
+            // Once matched, no need to check other queries
+            if ($match) {
+                break;
+            }
+        } while ($mqIndex--);
+
+        return $match;
     }
 }
