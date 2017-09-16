@@ -42,12 +42,20 @@ class AdaptiveImg
         }
     }
 
-    public static function adapt($tag)
+    /**
+     * @param string $tag
+     * @param int $width
+     * @return bool
+     * @throws \Exception
+     */
+    public static function adapt($tag, $width = 0)
     {
         $alt = '';
 
         preg_match_all('/\s([a-z-]+)=[\'"](.*?)[\'"]/ims', $tag, $matches);
         $options = array_combine($matches[1], $matches[2]);
+        if ($width > 0)
+            $options['width'] = $width;
 
         foreach (['src', 'sizes', 'alt'] as $att) {
             if (isset($options[$att])) {
