@@ -1,0 +1,12 @@
+<phpunit stopOnFailure="false">
+    <testsuites>
+        <testsuite name="AdaptiveImg">
+            <file>tests/AdaptiveImgTest.php</file>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">src</directory>
+        </whitelist>
+    </filter>
+</phpunit>
