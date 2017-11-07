@@ -22,11 +22,12 @@ class AdaptiveImg
      * @param array $info
      * @throws \Exception
      */
-    public function __construct($url, $alt, $path = '', $info = [])
+    public function __construct($url, $alt, $path = '', $info = [], $tag = 'img')
     {
         $this->url = $url;
         $this->alt = $alt;
         $this->info = $info;
+        $this->tag = $tag;
 
         if (empty($path)) {
             $parsedUrl = parse_url($url);
@@ -43,16 +44,20 @@ class AdaptiveImg
     }
 
     /**
-     * @param string $tag
+     * @param string $html
      * @param int $width
      * @return bool
      * @throws \Exception
      */
-    public static function adapt($tag, $width = 0)
+    public static function adapt($html, $width = 0)
     {
         $alt = '';
+        $html = trim($html);
+        $tag = 'img';
+        if (substr($html, 0, 7) == '<source')
+            $tag = 'source';
 
-        preg_match_all('/\s([a-z-]+)=[\'"](.*?)[\'"]/ims', $tag, $matches);
+        preg_match_all('/\s([a-z-]+)=[\'"](.*?)[\'"]/ims', $html, $matches);
         $options = array_combine($matches[1], $matches[2]);
         if ($width > 0)
             $options['width'] = $width;
@@ -67,7 +72,7 @@ class AdaptiveImg
         if (!isset($src, $sizes) && !isset($src, $options['width']))
             throw new \Exception('Wrong img tag to adapt', 400);
 
-        $image = new static($src, $alt);
+        $image = new static($src, $alt, '', [], $tag);
 
         if (!isset($sizes) && isset($options['width']))
             return $image->typeX($options['width'], '-', $options);
@@ -87,10 +92,11 @@ class AdaptiveImg
      */
     public function typeX($maxWidth = '-', $maxHeight = '-', $htmlOptions = [])
     {
-        list($src, $htmlOptions['srcset']) = self::srcSetX($maxWidth, $maxHeight);
+        list($htmlOptions['src'], $htmlOptions['srcset']) = self::srcSetX($maxWidth, $maxHeight);
+        $htmlOptions['alt'] = $this->alt;
         $attrString = $this->generateAttributes($htmlOptions);
 
-        return "<img src=\"$src\" alt=\"$this->alt\" $attrString>";
+        return "<$this->tag $attrString>";
     }
 
     /** Generate srcset attribute (type x) from parameters
@@ -124,6 +130,9 @@ class AdaptiveImg
     private function generateAttributes($htmlOptions)
     {
         $attrString = '';
+        if ($this->tag == 'source') {
+            unset($htmlOptions['alt'], $htmlOptions['src'], $htmlOptions['width']);
+        }
         foreach ($htmlOptions as $attr => $value) {
             if (!empty($attrString))
                 $attrString .= ' ';
@@ -158,12 +167,14 @@ class AdaptiveImg
         foreach ($widths as $width)
             if ($width <= $maxWidth)
                 $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#', "$1@{$width}x-.$2 {$width}w", $this->url);
+        $htmlOptions['src'] = $this->url;
+        $htmlOptions['alt'] = $this->alt;
         $htmlOptions['srcset'] = implode(', ', $srcSet);
         $htmlOptions['sizes'] = $sizes;
 
         $attrString = self::generateAttributes($htmlOptions);
 
-        return "<img src=\"$this->url\" alt=\"$this->alt\" $attrString>";
+        return "<$this->tag $attrString>";
     }
 
     public static function calcWidths($strValue)
