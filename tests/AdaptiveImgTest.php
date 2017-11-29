@@ -52,8 +52,17 @@ class AdaptiveImgTest extends \PHPUnit\Framework\TestCase
         $generatedImg3 = AdaptiveImg::adapt('
             <source src="test.jpg" sizes="(max-width: 992px) calc(50vw), (max-width: 1199px) 512px, (max-width: 1279px) 25vw, 320px">
         ');
+
+        $generatedImg4 = new AdaptiveImg('test.jpg', '');
+        $generatedImg4 = $generatedImg4->typeW('(max-width: 992px) calc(50vw), (max-width: 1199px) 512px, (max-width: 1279px) 25vw, 320px', [], [
+            'class'     => 'class-1 class-2',
+            'style'     => 'border: 1px solid black',
+            'data-name' => 'image']);
+
         $this->assertEquals($this->explode($expected), $this->explode($generatedImg));
         $this->assertEquals($this->explode($expected), $this->explode($generatedImg2));
+        $this->assertEquals($this->explode($expected), $this->explode($generatedImg4));
+
         $this->assertEquals($this->explode($expected2), $this->explode($generatedImg3));
     }
 }

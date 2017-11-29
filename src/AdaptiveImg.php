@@ -148,10 +148,13 @@ class AdaptiveImg
      * @param array $htmlOptions other attributes of the img tag in attribute => value format
      * @return string HTML img tag
      */
-    public function typeW($sizes, $widths, $htmlOptions = [])
+    public function typeW($sizes, $widths = [], $htmlOptions = [])
     {
         $srcSet = [];
         $maxWidth = $this->info[0];
+
+        if (empty($widths))
+            $widths = self::calcWidths($sizes);
 
         foreach ($widths as $width) {
             $widths[] = $width * 2;
