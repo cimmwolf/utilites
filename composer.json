@@ -25,12 +25,15 @@
           "type": "zip"
         },
         "autoload": {
-          "classmap": ["src-php/EMT.php"]
+          "classmap": [
+            "src-php/EMT.php"
+          ]
         }
       }
     }
   ],
   "require": {
+    "php": ">=7.0.0",
     "emuravjev/mdash": "dev-master"
   },
   "require-dev": {

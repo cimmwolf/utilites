@@ -21,6 +21,7 @@ class AdaptiveImg
      * @param string $alt
      * @param string $path
      * @param array $info
+     * @param string $tag
      * @throws \Exception
      */
     public function __construct($url, $alt, $path = '', $info = [], $tag = 'img')
@@ -50,18 +51,20 @@ class AdaptiveImg
      * @return bool
      * @throws \Exception
      */
-    public static function adapt($html, $width = 0, $path = '')
+    public static function adapt($html, $width = 0)
     {
         $alt = '';
         $html = trim($html);
         $tag = 'img';
-        if (substr($html, 0, 7) == '<source')
+        if (substr($html, 0, 7) == '<source') {
             $tag = 'source';
+        }
 
         preg_match_all('/\s([a-z-]+)=[\'"](.*?)[\'"]/ims', $html, $matches);
         $options = array_combine($matches[1], $matches[2]);
-        if ($width > 0)
+        if ($width > 0) {
             $options['width'] = $width;
+        }
 
         foreach (['src', 'sizes', 'alt'] as $att) {
             if (isset($options[$att])) {
@@ -70,16 +73,23 @@ class AdaptiveImg
             }
         }
 
-        if (!isset($src, $sizes) && !isset($src, $options['width']))
+        if (isset($options['width']) || isset($options['data-width'])) {
+            $staticWidth = $options['width'] ?? $options['data-width'];
+        }
+
+        if (!isset($src, $sizes) && !isset($src, $staticWidth)) {
             throw new \Exception('Wrong img tag to adapt', 400);
+        }
 
-        $image = new static($src, $alt, $path, [], $tag);
+        $image = new static($src, $alt, '', [], $tag);
 
-        if (!isset($sizes) && isset($options['width']))
-            return $image->typeX($options['width'], '-', $options);
+        if (!isset($sizes) && isset($staticWidth)) {
+            return $image->typeX($staticWidth, '-', $options);
+        }
 
-        if (isset($sizes))
+        if (isset($sizes)) {
             return $image->typeW($sizes, self::calcWidths($sizes), $options);
+        }
 
         return false;
     }
