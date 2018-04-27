@@ -11,6 +11,7 @@ namespace DenisBeliaev;
  */
 class AdaptiveImg
 {
+    public static $pathPrefix = __DIR__ . '/../../../..';
     private $info;
     private $alt;
 
@@ -33,7 +34,7 @@ class AdaptiveImg
             $parsedUrl = parse_url($url);
             if (!isset($parsedUrl['path']))
                 throw new \Exception("Can't determine path");
-            $path = realpath(__DIR__ . '/../../../..') . $parsedUrl['path'];
+            $path = realpath(self::$pathPrefix) . $parsedUrl['path'];
         }
 
         if (!isset($info[0]) OR !isset($info[1])) {
@@ -49,7 +50,7 @@ class AdaptiveImg
      * @return bool
      * @throws \Exception
      */
-    public static function adapt($html, $width = 0)
+    public static function adapt($html, $width = 0, $path = '')
     {
         $alt = '';
         $html = trim($html);
@@ -72,7 +73,7 @@ class AdaptiveImg
         if (!isset($src, $sizes) && !isset($src, $options['width']))
             throw new \Exception('Wrong img tag to adapt', 400);
 
-        $image = new static($src, $alt, '', [], $tag);
+        $image = new static($src, $alt, $path, [], $tag);
 
         if (!isset($sizes) && isset($options['width']))
             return $image->typeX($options['width'], '-', $options);
