@@ -5,6 +5,8 @@
 
 namespace DenisBeliaev;
 
+use EMTypograph;
+
 class Typograph
 {
     /**
@@ -12,7 +14,8 @@ class Typograph
      * @param array $settings Settings for emuravjev/mdash
      * @return string
      */
-    static function file($path, $settings = []) {
+    static function file($path, $settings = [])
+    {
         ob_start();
         include $path;
         $content = ob_get_contents();
@@ -23,20 +26,20 @@ class Typograph
 
     /**
      * @param string $content Content for typograph
-     * @param array $settings  Settings for emuravjev/mdash
+     * @param array $settings Settings for emuravjev/mdash
      * @return string
      */
     static function string($content, $settings = [])
     {
         $settings = array_merge($settings, [
             'Text.auto_links' => 'off',
-            'Text.email' => 'off',
+            'Text.email'      => 'off',
             'Text.paragraphs' => 'off',
-            'Text.breakline' => 'off',
+            'Text.breakline'  => 'off',
         ]);
 
 
-        $T = new \EMTypograph();
+        $T = new EMTypograph();
         $T->setup($settings);
         $T->set_text($content);
 

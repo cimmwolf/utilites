@@ -5,6 +5,8 @@
 
 namespace DenisBeliaev;
 
+use Exception;
+
 /**
  * Class adaptiveImg
  * @package Utilities
@@ -22,7 +24,7 @@ class AdaptiveImg
      * @param string $path
      * @param array $info
      * @param string $tag
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct($url, $alt, $path = '', $info = [], $tag = 'img')
     {
@@ -33,15 +35,17 @@ class AdaptiveImg
 
         if (empty($path)) {
             $parsedUrl = parse_url($url);
-            if (!isset($parsedUrl['path']))
-                throw new \Exception("Can't determine path");
+            if (!isset($parsedUrl['path'])) {
+                throw new Exception("Can't determine path");
+            }
             $path = realpath(self::$pathPrefix) . $parsedUrl['path'];
         }
 
         if (!isset($info[0]) OR !isset($info[1])) {
             $this->info = @getimagesize($path);
-            if (empty($this->info))
+            if (empty($this->info)) {
                 $this->info = [1920, 1080];
+            }
         }
     }
 
@@ -49,7 +53,7 @@ class AdaptiveImg
      * @param string $html
      * @param int $width
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public static function adapt($html, $width = 0)
     {
@@ -78,7 +82,7 @@ class AdaptiveImg
         }
 
         if (!isset($src, $sizes) && !isset($src, $staticWidth)) {
-            throw new \Exception('Wrong img tag to adapt', 400);
+            throw new Exception('Wrong img tag to adapt', 400);
         }
 
         $image = new static($src, $alt, '', [], $tag);
@@ -103,7 +107,9 @@ class AdaptiveImg
      */
     public function typeX($maxWidth = '-', $maxHeight = '-', $htmlOptions = [])
     {
-        list($htmlOptions['src'], $htmlOptions['srcset']) = self::srcSetX($maxWidth, $maxHeight);
+        list($src, $srcset) = self::srcSetX($maxWidth, $maxHeight);
+        $htmlOptions['src'] = $src;
+        $htmlOptions['srcset'] = $srcset;
         $htmlOptions['alt'] = $this->alt;
         $attrString = $this->generateAttributes($htmlOptions);
 
@@ -124,15 +130,19 @@ class AdaptiveImg
             $width = $maxWidth;
             $height = $maxHeight;
             foreach ([1, 1.5, 2, 3] as $multiple) {
-                if (is_numeric($maxWidth))
+                if (is_numeric($maxWidth)) {
                     $width = round($maxWidth * $multiple);
+                }
 
-                if (is_numeric($maxHeight))
+                if (is_numeric($maxHeight)) {
                     $height = round($maxHeight * $multiple);
+                }
 
                 $descriptor = number_format($multiple, 1);
-                if ($width <= $this->info[0] AND $height <= $this->info[1])
-                    $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#i', "$1@{$width}x$height.$2 {$descriptor}x", $this->url);
+                if ($width <= $this->info[0] AND $height <= $this->info[1]) {
+                    $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#i', "$1@{$width}x$height.$2 {$descriptor}x",
+                        $this->url);
+                }
             }
         }
         return [$src, implode(', ', $srcSet)];
@@ -141,12 +151,14 @@ class AdaptiveImg
     private function generateAttributes($htmlOptions)
     {
         $attrString = '';
+        $htmlOptions['data-aspect-ratio'] = round($this->info[1] / $this->info[0], 2);
         if ($this->tag == 'source') {
             unset($htmlOptions['alt'], $htmlOptions['src'], $htmlOptions['width']);
         }
         foreach ($htmlOptions as $attr => $value) {
-            if (!empty($attrString))
+            if (!empty($attrString)) {
                 $attrString .= ' ';
+            }
             $attrString .= "$attr=\"$value\"";
         }
         return $attrString;
@@ -164,23 +176,27 @@ class AdaptiveImg
         $srcSet = [];
         $maxWidth = $this->info[0];
 
-        if (empty($widths))
+        if (empty($widths)) {
             $widths = self::calcWidths($sizes);
+        }
 
         foreach ($widths as $width) {
             $widths[] = $width * 2;
             $widths[] = $width * 3;
         }
 
-        if (!in_array($maxWidth, $widths))
+        if (!in_array($maxWidth, $widths)) {
             $widths[] = $maxWidth;
+        }
 
         $widths = array_unique($widths);
         sort($widths);
 
-        foreach ($widths as $width)
-            if ($width <= $maxWidth)
+        foreach ($widths as $width) {
+            if ($width <= $maxWidth) {
                 $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#', "$1@{$width}x-.$2 {$width}w", $this->url);
+            }
+        }
         $htmlOptions['src'] = $this->url;
         $htmlOptions['alt'] = $this->alt;
         $htmlOptions['srcset'] = implode(', ', $srcSet);
@@ -201,13 +217,14 @@ class AdaptiveImg
             if (isset($query[1])) {
                 $queries[] = $query[0];
                 $values[] = $query[1];
-            } else
+            } else {
                 $defaultValue = $query[0];
+            }
         }
 
         $sizes = [320, 375, 480, 568, 667, 768, 1024, 1280, 1366, 1440, 1640, 1920];
         $widths = [];
-        if (!empty($defaultValue))
+        if (!empty($defaultValue)) {
             foreach ($sizes as $size) {
                 $value = $defaultValue;
 
@@ -221,10 +238,12 @@ class AdaptiveImg
                 $value = preg_replace('/([\d|\.]+)vw/i', '($1*' . $size . '/100)', $value);
                 $value = preg_replace('/^calc\((.*?)\)$/i', '$1', $value);
 
-                if (!is_numeric($value))
+                if (!is_numeric($value)) {
                     $value = ceil(eval('return' . $value . ';'));
+                }
                 $widths[] = (int)ceil($value);
             }
+        }
 
         $widths = array_unique($widths);
         sort($widths);
@@ -245,10 +264,11 @@ class AdaptiveImg
 
     protected static function matchMedia($media, $screen = [])
     {
-        if (strpos($media, ',') !== false)
+        if (strpos($media, ',') !== false) {
             $mql = explode(',', $media);
-        else
+        } else {
             $mql = [$media];
+        }
 
         $mqIndex = count($mql) - 1;
         $mqLength = $mqIndex;
@@ -258,23 +278,26 @@ class AdaptiveImg
         $expr = null;
         $match = true;
 
-        if ($media == '')
+        if ($media == '') {
             return true;
+        }
 
         do {
             $mq = $mql[$mqLength - $mqIndex];
             $exprListStr = $mq;
 
-            if (strpos($exprListStr, ' and ') !== false)
+            if (strpos($exprListStr, ' and ') !== false) {
                 $exprList = explode(' and ', $exprListStr);
-            else
+            } else {
                 $exprList = [$exprListStr];
+            }
 
             $exprIndex = count($exprList) - 1;
 
             if ($match && $exprIndex >= 0 && $exprListStr !== '') {
                 do {
-                    preg_match('/^\s*\(\s*(-[a-z]+-)?(min-|max-)?([a-z\-]+)\s*(:?\s*([0-9]+(\.[0-9]+)?|portrait|landscape)(px|em|dppx|dpcm|rem|%|in|cm|mm|ex|pt|pc|\/([0-9]+(\.[0-9]+)?))?)?\s*\)\s*$/', $exprList[$exprIndex], $expr);
+                    preg_match('/^\s*\(\s*(-[a-z]+-)?(min-|max-)?([a-z\-]+)\s*(:?\s*([0-9]+(\.[0-9]+)?|portrait|landscape)(px|em|dppx|dpcm|rem|%|in|cm|mm|ex|pt|pc|\/([0-9]+(\.[0-9]+)?))?)?\s*\)\s*$/',
+                        $exprList[$exprIndex], $expr);
 
                     if (empty($expr) || empty($screen[$expr[3]])) {
                         $match = false;
@@ -287,37 +310,30 @@ class AdaptiveImg
                     $unit = $expr[7];
                     $feature = $screen[$expr[3]];
 
-//                echo 'prefix =' . $prefix . PHP_EOL;
-//                echo 'value = ' . $value . PHP_EOL;
-//                echo 'unit = ' . $unit . PHP_EOL;
-//                echo 'feature = ' . $feature . PHP_EOL;
-
-
-                    if ($unit && $unit === 'px')
+                    if ($unit && $unit === 'px') {
                         $value = $length;
-
-                    // Test for prefix min or max
-                    // Test value against feature
-                    if ($prefix === 'min-' && $value) {
-                        $match = $feature >= $value;
-                    } else if ($prefix === 'max-' && $value) {
-                        $match = $feature <= $value;
-                    } else if ($value) {
-                        $match = $feature === $value;
-                    } else {
-                        $match = !!$feature;
                     }
 
-                    // If 'match' is false, break loop
-                    // Continue main loop through query list
+                    if ($prefix === 'min-' && $value) {
+                        $match = $feature >= $value;
+                    } else {
+                        if ($prefix === 'max-' && $value) {
+                            $match = $feature <= $value;
+                        } else {
+                            if ($value) {
+                                $match = $feature === $value;
+                            } else {
+                                $match = !!$feature;
+                            }
+                        }
+                    }
+
                     if (!$match) {
                         break;
                     }
                 } while ($exprIndex--);
             }
 
-            // If match is true, break loop
-            // Once matched, no need to check other queries
             if ($match) {
                 break;
             }
