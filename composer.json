@@ -18,10 +18,10 @@
     {
       "type": "package",
       "package": {
-        "name": "emuravjev/mdash",
+        "name": "cimmwolf/mdash",
         "version": "dev-master",
         "dist": {
-          "url": "https://github.com/emuravjev/mdash/archive/master.zip",
+          "url": "https://github.com/cimmwolf/mdash/archive/master.zip",
           "type": "zip"
         },
         "autoload": {
@@ -34,7 +34,7 @@
   ],
   "require": {
     "php": ">=7.0.0",
-    "emuravjev/mdash": "dev-master"
+    "cimmwolf/mdash": "dev-master"
   },
   "require-dev": {
     "phpunit/phpunit": "^6.3"
