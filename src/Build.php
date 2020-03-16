@@ -10,17 +10,17 @@ use RecursiveIteratorIterator;
 class Build
 {
 	protected $dir;
-	protected $folders = [];
+	protected $paths = [];
 
 	public function __construct()
 	{
 		$this->dir = getcwd();
 	}
 
-	function addFolder($folder)
+	function addPath($path)
 	{
-		if (!in_array($folder, $this->folders)) {
-			$this->folders[] = $folder;
+		if (!in_array($path, $this->paths)) {
+			$this->paths[] = $path;
 		}
 	}
 
@@ -39,11 +39,11 @@ class Build
 			mkdir($buildFolder);
 		}
 
-		foreach ($this->folders as $folder) {
-			$oldName = $this->dir . $folder;
-			$newName = $buildFolder . $folder;
+		foreach ($this->paths as $path) {
+			$oldName = $this->dir . $path;
+			$newName = $buildFolder . $path;
 			if (file_exists($oldName)) {
-				if (count(explode('/', $newName)) > 1) {
+				if (!file_exists(dirname($newName))) {
 					mkdir(dirname($newName), 0777, true);
 				}
 				rename($oldName, $newName);
