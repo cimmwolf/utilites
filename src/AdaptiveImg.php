@@ -235,7 +235,7 @@ class AdaptiveImg
 					}
 				}
 				$value = preg_replace('/px/i', '', $value);
-				$value = preg_replace('/([\d|\.]+)vw/i', '($1*' . $size . '/100)', $value);
+				$value = preg_replace('/([\d|.]+)vw/i', '($1*' . $size . '/100)', $value);
 				$value = preg_replace('/^calc\((.*?)\)$/i', '$1', $value);
 
 				if (!is_numeric($value)) {
