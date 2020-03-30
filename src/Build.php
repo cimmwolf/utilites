@@ -3,70 +3,99 @@ declare(strict_types=1);
 
 namespace DenisBeliaev;
 
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
+use Symfony\Component\{Filesystem\Filesystem, Finder\Finder};
+use InvalidArgumentException;
 
 
 class Build
 {
-	protected $dir;
-	protected $paths = [];
+	private $baseDir;
+	private $paths = [];
+	private $images = [];
+	private $fs;
+	/**
+	 * @var string
+	 */
+	private $publicDir;
+	/**
+	 * @var string
+	 */
+	private $buildDir;
 
 	public function __construct()
 	{
-		$this->dir = getcwd();
+		$this->baseDir = getcwd();
+		$this->publicDir = $this->baseDir . '/public';
+		$this->buildDir = $this->baseDir . '/build';
+
+		$this->fs = new Filesystem();
 	}
 
-	function addPath($path)
+	public function run()
+	{
+		if (file_exists($this->buildDir)) {
+			$this->fs->remove($this->buildDir);
+		}
+
+		if (file_exists($this->baseDir . '/public')) {
+			rename($this->publicDir, $this->buildDir);
+		} else {
+			mkdir($this->buildDir);
+		}
+
+		foreach ($this->paths as $path) {
+			$this->copyPath($path);
+		}
+
+		if (!empty($this->images)) {
+			$this->convertWebP();
+		}
+
+		return true;
+	}
+
+	protected function convertWebP()
+	{
+		foreach ($this->images as $image) {
+			$filename = $this->buildDir . $image;
+			$im = imagecreatefromwebp($filename);
+
+			$newFilename = preg_replace('~(.*)\.webp$~', '$1.jpg', $filename);
+			imagejpeg($im, $newFilename, 88);
+			imagedestroy($im);
+		}
+	}
+
+	public function addImages($path)
+	{
+		$this->addPath($path);
+
+		$finder = new Finder();
+		$finder->files()->in($this->baseDir . $path)->name('*.webp');
+		foreach ($finder as $image) {
+			$this->images[] = str_replace($this->baseDir, '', $image->getRealPath());
+		}
+	}
+
+	public function addPath($path)
 	{
 		if (!in_array($path, $this->paths)) {
 			$this->paths[] = $path;
 		}
 	}
 
-	function run()
+	private function copyPath($path)
 	{
-		$buildFolder = $this->dir . '/build';
-		$publicFolder = $this->dir . '/public';
-
-		if (file_exists($buildFolder)) {
-			$this->deleteFolder($buildFolder);
-		}
-
-		if (file_exists($this->dir . '/public')) {
-			rename($publicFolder, $buildFolder);
+		$currentName = $this->baseDir . $path;
+		$newName = $this->buildDir . $path;
+		if (file_exists($currentName)) {
+			if (is_dir($currentName)) {
+				$this->fs->mirror($currentName, $newName);
+			} else {
+				$this->fs->copy($currentName, $newName);
+			}
 		} else {
-			mkdir($buildFolder);
+			throw new InvalidArgumentException("PHP build: No such directory: $currentName" . PHP_EOL);
 		}
-
-		foreach ($this->paths as $path) {
-			$oldName = $this->dir . $path;
-			$newName = $buildFolder . $path;
-			if (file_exists($oldName)) {
-				if (!file_exists(dirname($newName))) {
-					mkdir(dirname($newName), 0777, true);
-				}
-				rename($oldName, $newName);
-			} else {
-				echo "PHP build: No such directory: $oldName" . PHP_EOL;
-			}
-		}
-
-		echo 'PHP build: Complete' . PHP_EOL;
-	}
-
-	protected function deleteFolder($dir)
-	{
-		$it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
-		$files = new RecursiveIteratorIterator($it,
-			RecursiveIteratorIterator::CHILD_FIRST);
-		foreach ($files as $file) {
-			if ($file->isDir()) {
-				rmdir($file->getRealPath());
-			} else {
-				unlink($file->getRealPath());
-			}
-		}
-		rmdir($dir);
 	}
 }

@@ -1,7 +1,7 @@
 <phpunit stopOnFailure="false">
     <testsuites>
-        <testsuite name="AdaptiveImg">
-            <file>tests/AdaptiveImgTest.php</file>
+        <testsuite>
+            <directory suffix=".php">tests</directory>
         </testsuite>
     </testsuites>
     <filter>
