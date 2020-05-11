@@ -1,101 +1,102 @@
 <?php
+
 declare(strict_types=1);
 
 namespace DenisBeliaev;
 
-use Symfony\Component\{Filesystem\Filesystem, Finder\Finder};
 use InvalidArgumentException;
+use Symfony\Component\{Filesystem\Filesystem, Finder\Finder};
 
 
 class Build
 {
-	private $baseDir;
-	private $paths = [];
-	private $images = [];
-	private $fs;
-	/**
-	 * @var string
-	 */
-	private $publicDir;
-	/**
-	 * @var string
-	 */
-	private $buildDir;
+    private $baseDir;
+    private $paths = [];
+    private $images = [];
+    private $fs;
+    /**
+     * @var string
+     */
+    private $publicDir;
+    /**
+     * @var string
+     */
+    private $buildDir;
 
-	public function __construct()
-	{
-		$this->baseDir = getcwd();
-		$this->publicDir = $this->baseDir . '/public';
-		$this->buildDir = $this->baseDir . '/build';
+    public function __construct()
+    {
+        $this->baseDir = getcwd();
+        $this->publicDir = $this->baseDir . '/public';
+        $this->buildDir = $this->baseDir . '/build';
 
-		$this->fs = new Filesystem();
-	}
+        $this->fs = new Filesystem();
+    }
 
-	public function run()
-	{
-		if (file_exists($this->buildDir)) {
-			$this->fs->remove($this->buildDir);
-		}
+    public function run()
+    {
+        if (file_exists($this->buildDir)) {
+            $this->fs->remove($this->buildDir);
+        }
 
-		if (file_exists($this->baseDir . '/public')) {
-			rename($this->publicDir, $this->buildDir);
-		} else {
-			mkdir($this->buildDir);
-		}
+        if (file_exists($this->baseDir . '/public')) {
+            rename($this->publicDir, $this->buildDir);
+        } else {
+            mkdir($this->buildDir);
+        }
 
-		foreach ($this->paths as $path) {
-			$this->copyPath($path);
-		}
+        foreach ($this->paths as $path) {
+            $this->copyPath($path);
+        }
 
-		if (!empty($this->images)) {
-			$this->convertWebP();
-		}
+        if (!empty($this->images)) {
+            $this->convertWebP();
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	protected function convertWebP()
-	{
-		foreach ($this->images as $image) {
-			$filename = $this->buildDir . $image;
-			$im = imagecreatefromwebp($filename);
+    private function copyPath($path)
+    {
+        $currentName = $this->baseDir . $path;
+        $newName = $this->buildDir . $path;
+        if (file_exists($currentName)) {
+            if (is_dir($currentName)) {
+                $this->fs->mirror($currentName, $newName);
+            } else {
+                $this->fs->copy($currentName, $newName);
+            }
+        } else {
+            throw new InvalidArgumentException("PHP build: No such directory: $currentName" . PHP_EOL);
+        }
+    }
 
-			$newFilename = preg_replace('~(.*)\.webp$~', '$1.jpg', $filename);
-			imagejpeg($im, $newFilename, 88);
-			imagedestroy($im);
-		}
-	}
+    protected function convertWebP()
+    {
+        foreach ($this->images as $image) {
+            $filename = $this->buildDir . $image;
+            $im = imagecreatefromwebp($filename);
 
-	public function addImages($path)
-	{
-		$this->addPath($path);
+            $newFilename = preg_replace('~(.*)\.webp$~', '$1.jpg', $filename);
+            imagejpeg($im, $newFilename, 88);
+            imagedestroy($im);
+        }
+    }
 
-		$finder = new Finder();
-		$finder->files()->in($this->baseDir . $path)->name('*.webp');
-		foreach ($finder as $image) {
-			$this->images[] = str_replace($this->baseDir, '', $image->getRealPath());
-		}
-	}
+    public function addImages($path)
+    {
+        $this->addPath($path);
 
-	public function addPath($path)
-	{
-		if (!in_array($path, $this->paths)) {
-			$this->paths[] = $path;
-		}
-	}
+        $finder = new Finder();
+        $finder->files()->in($this->baseDir . $path)->name('*.webp');
+        foreach ($finder as $image) {
+            $this->images[] = str_replace($this->baseDir, '', $image->getRealPath());
+        }
+    }
 
-	private function copyPath($path)
-	{
-		$currentName = $this->baseDir . $path;
-		$newName = $this->buildDir . $path;
-		if (file_exists($currentName)) {
-			if (is_dir($currentName)) {
-				$this->fs->mirror($currentName, $newName);
-			} else {
-				$this->fs->copy($currentName, $newName);
-			}
-		} else {
-			throw new InvalidArgumentException("PHP build: No such directory: $currentName" . PHP_EOL);
-		}
-	}
+    public function addPath($path)
+    {
+        if (!in_array($path, $this->paths)) {
+            $this->paths[] = $path;
+        }
+    }
 }
