@@ -22,9 +22,20 @@ class Build
      * @var string
      */
     private $buildDir;
+    /**
+     * @var array
+     */
+    private $config = [
+        'pages'        => '/dist/pages',
+        'cacheBusting' => []
+    ];
 
-    public function __construct()
+    public function __construct($config = null)
     {
+        if (!empty($config)) {
+            $this->config = array_replace_recursive($this->config, $config);
+        }
+
         $this->baseDir = getcwd();
         $this->publicDir = $this->baseDir . '/public';
         $this->buildDir = $this->baseDir . '/build';
@@ -52,25 +63,27 @@ class Build
             $this->convertWebP();
         }
 
+        $this->cacheBusting();
+
         return true;
     }
 
     private function copyPath($path)
     {
         $currentName = $this->baseDir . $path;
-        $newName = $this->buildDir . $path;
+        $newPathname = $this->buildDir . $path;
         if (file_exists($currentName)) {
             if (is_dir($currentName)) {
-                $this->fs->mirror($currentName, $newName);
+                $this->fs->mirror($currentName, $newPathname);
             } else {
-                $this->fs->copy($currentName, $newName);
+                $this->fs->copy($currentName, $newPathname);
             }
         } else {
             throw new InvalidArgumentException("PHP build: No such directory: $currentName" . PHP_EOL);
         }
     }
 
-    protected function convertWebP()
+    private function convertWebP()
     {
         foreach ($this->images as $image) {
             $filename = $this->buildDir . $image;
@@ -79,6 +92,40 @@ class Build
             $newFilename = preg_replace('~(.*)\.webp$~', '$1.jpg', $filename);
             imagejpeg($im, $newFilename, 88);
             imagedestroy($im);
+        }
+    }
+
+    private function cacheBusting()
+    {
+        $uniqId = uniqid();
+        foreach ($this->config['cacheBusting'] as $oldPath) {
+            $currentPathname = $this->buildDir . $oldPath;
+
+            if (!is_file($currentPathname)) {
+                throw new InvalidArgumentException("PHP build: $currentPathname must be regular file" . PHP_EOL);
+            }
+
+            $pathInfo = pathinfo($oldPath);
+            $newPath = '/' . implode('.', [$pathInfo['filename'], $uniqId, $pathInfo['extension']]);
+            $newPathname = $this->buildDir . $newPath;
+
+            if (file_exists($currentPathname)) {
+                $this->fs->rename($currentPathname, $newPathname);
+                $finder = (new Finder())
+                    ->files()
+                    ->name('*.html')
+                    ->in($this->buildDir . $this->config['pages']);
+                foreach ($finder as $splFileInfo) {
+                    $content = str_replace(
+                        ['src="' . $oldPath . '"', 'href="' . $oldPath . '"'],
+                        ['src="' . $newPath . '"', 'href="' . $newPath . '"'],
+                        $splFileInfo->getContents()
+                    );
+                    file_put_contents($splFileInfo->getPathname(), $content);
+                }
+            } else {
+                throw new InvalidArgumentException("PHP build: No such directory: $currentPathname" . PHP_EOL);
+            }
         }
     }
 

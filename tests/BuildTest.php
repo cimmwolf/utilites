@@ -2,6 +2,8 @@
 
 use DenisBeliaev\Build;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 
 class BuildTest extends TestCase
 {
@@ -41,8 +43,33 @@ class BuildTest extends TestCase
         }
     }
 
+    public function testHashedPaths()
+    {
+        $build = new Build(
+            [
+                'pages'        => '/tests/fixtures/html',
+                'cacheBusting' => [
+                    '/tests/fixtures/test.file'
+                ]
+            ]
+        );
+
+        $build->addPath('/tests/fixtures');
+
+        $build->run();
+
+        $finder = (new Finder())->files()->name('test.*.file')->in(getcwd() . '/build')->depth(0);
+        $this->assertTrue($finder->hasResults());
+
+        /** @var SplFileInfo $splFile */
+        $splFile = iterator_to_array($finder, false)[0];
+        $fileName = $splFile->getFileName();
+
+        $this->assertContains($fileName, file_get_contents(getcwd() . '/build/tests/fixtures/html/template.html'));
+    }
+
     protected function setUp()
     {
-        (new Symfony\Component\Filesystem\Filesystem())->remove(getcwd() . '/build');
+        (new Filesystem())->remove(getcwd() . '/build');
     }
 }
