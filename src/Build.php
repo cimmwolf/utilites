@@ -97,7 +97,6 @@ class Build
 
     private function cacheBusting()
     {
-        $uniqId = uniqid();
         foreach ($this->config['cacheBusting'] as $oldPath) {
             $currentPathname = $this->buildDir . $oldPath;
 
@@ -105,8 +104,10 @@ class Build
                 throw new InvalidArgumentException("PHP build: $currentPathname must be regular file" . PHP_EOL);
             }
 
+            $hash = hash_file('crc32', $currentPathname);
+
             $pathInfo = pathinfo($oldPath);
-            $newPath = '/' . implode('.', [$pathInfo['filename'], $uniqId, $pathInfo['extension']]);
+            $newPath = '/' . implode('.', [$pathInfo['filename'], $hash, $pathInfo['extension']]);
             $newPathname = $this->buildDir . $newPath;
 
             if (file_exists($currentPathname)) {
