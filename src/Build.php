@@ -64,11 +64,10 @@ class Build
         if (file_exists($this->buildDir)) {
             $this->fs->remove($this->buildDir);
         }
+        mkdir($this->buildDir);
 
         if (file_exists($this->baseDir . '/public')) {
-            rename($this->publicDir, $this->buildDir);
-        } else {
-            mkdir($this->buildDir);
+            $this->fs->mirror($this->publicDir, $this->buildDir);
         }
 
         foreach ($this->paths as $path) {

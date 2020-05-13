@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 - New build setting `images`
 
+## Changed
+- The content of the /public folder now copying to the /build folder instead of being moved
+
 ## [3.4.0]
 ## Added
 - Cache busting method to Build class

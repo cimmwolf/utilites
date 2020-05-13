@@ -2,8 +2,7 @@
 
 use DenisBeliaev\Build;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
+use Symfony\Component\{Filesystem\Filesystem, Finder\Finder};
 
 class BuildTest extends TestCase
 {
