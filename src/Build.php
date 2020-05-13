@@ -27,6 +27,7 @@ class Build
      */
     private $config = [
         'pages'        => '/dist/pages',
+        'images'       => '/img',
         'cacheBusting' => []
     ];
 
@@ -41,6 +42,21 @@ class Build
         $this->buildDir = $this->baseDir . '/build';
 
         $this->fs = new Filesystem();
+
+        $this->indexImages();
+    }
+
+    private function indexImages()
+    {
+        $imgFolder = $this->baseDir . $this->config['images'];
+        if (file_exists($imgFolder) && is_dir($imgFolder)) {
+            $finder = new Finder();
+            $finder->files()->in($this->baseDir . $this->config['images'])->name('*.webp');
+            $this->images = [];
+            foreach ($finder as $image) {
+                $this->images[] = str_replace($this->baseDir, '', $image->getRealPath());
+            }
+        }
     }
 
     public function run()
@@ -134,11 +150,9 @@ class Build
     {
         $this->addPath($path);
 
-        $finder = new Finder();
-        $finder->files()->in($this->baseDir . $path)->name('*.webp');
-        foreach ($finder as $image) {
-            $this->images[] = str_replace($this->baseDir, '', $image->getRealPath());
-        }
+        $this->config['images'] = $path;
+
+        $this->indexImages();
     }
 
     public function addPath($path)
