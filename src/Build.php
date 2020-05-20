@@ -12,7 +12,7 @@ class Build
 {
     private $baseDir;
     private $paths = [];
-    private $images = [];
+    private $webpImages = [];
     private $fs;
     /**
      * @var string
@@ -52,9 +52,9 @@ class Build
         if (file_exists($imgFolder) && is_dir($imgFolder)) {
             $finder = new Finder();
             $finder->files()->in($this->baseDir . $this->config['images'])->name('*.webp');
-            $this->images = [];
+            $this->webpImages = [];
             foreach ($finder as $image) {
-                $this->images[] = str_replace($this->baseDir, '', $image->getRealPath());
+                $this->webpImages[] = str_replace($this->baseDir, '', $image->getRealPath());
             }
         }
     }
@@ -74,7 +74,7 @@ class Build
             $this->copyPath($path);
         }
 
-        if (!empty($this->images)) {
+        if (!empty($this->webpImages)) {
             $this->convertWebP();
         }
 
@@ -100,7 +100,7 @@ class Build
 
     private function convertWebP()
     {
-        foreach ($this->images as $image) {
+        foreach ($this->webpImages as $image) {
             $filename = $this->buildDir . $image;
             $im = imagecreatefromwebp($filename);
 
