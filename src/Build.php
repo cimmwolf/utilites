@@ -131,7 +131,8 @@ class Build
         $xmlString = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
         foreach ($data as $url) {
             $url = str_replace('index', '', $url);
-            $xmlString .= "<url><loc>https://" . implode('/', [$this->config['domain'], $url]) . "</loc></url>";
+            $loc = "https://" . implode('/', array_filter([$this->config['domain'], $url]));
+            $xmlString .= "<url><loc>$loc</loc></url>";
         }
         $xmlString .= '</urlset>';
         file_put_contents($this->buildDir . '/sitemap.xml', $xmlString);
