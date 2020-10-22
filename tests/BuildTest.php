@@ -67,6 +67,19 @@ class BuildTest extends TestCase
         $this->assertContains($fileName, file_get_contents(getcwd() . '/build/tests/fixtures/html/template.html'));
     }
 
+    public function testSitemap()
+    {
+        $build = new Build(['pages' => '/tests/fixtures/html', 'domain' => 'example.com']);
+        $build->addPath('/tests/fixtures/html');
+        $build->run();
+        $sitemapFilename = getcwd() . '/build/sitemap.xml';
+        $this->assertFileExists($sitemapFilename);
+        $this->assertXmlStringEqualsXmlString(
+            '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/template</loc></url></urlset>',
+            file_get_contents($sitemapFilename)
+        );
+    }
+
     protected function setUp()
     {
         (new Filesystem())->remove(getcwd() . '/build');

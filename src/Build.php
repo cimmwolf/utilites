@@ -78,6 +78,10 @@ class Build
             $this->convertWebP();
         }
 
+        if (!empty($this->config['domain'])) {
+            $this->generateSitemap();
+        }
+
         $this->cacheBusting();
 
         return true;
@@ -108,6 +112,29 @@ class Build
             imagejpeg($im, $newFilename, 88);
             imagedestroy($im);
         }
+    }
+
+    private function generateSitemap()
+    {
+        $finder = (new Finder())
+            ->files()
+            ->name('*.html')
+            ->notName('_*')
+            ->notName('404.html')
+            ->in($this->buildDir . $this->config['pages']);
+
+        $data = [];
+        foreach ($finder as $splFileInfo) {
+            $data[] = $splFileInfo->getBasename('.html');
+        }
+
+        $xmlString = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+        foreach ($data as $url) {
+            $url = str_replace('index', '', $url);
+            $xmlString .= "<url><loc>https://" . implode('/', [$this->config['domain'], $url]) . "</loc></url>";
+        }
+        $xmlString .= '</urlset>';
+        file_put_contents($this->buildDir . '/sitemap.xml', $xmlString);
     }
 
     private function cacheBusting()
