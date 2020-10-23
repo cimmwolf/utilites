@@ -116,22 +116,23 @@ class Build
 
     private function generateSitemap()
     {
+        $baseDir = $this->buildDir . $this->config['pages'];
         $finder = (new Finder())
             ->files()
             ->name('*.html')
             ->notName('_*')
             ->notName('404.html')
-            ->in($this->buildDir . $this->config['pages']);
+            ->in($baseDir);
 
         $data = [];
         foreach ($finder as $splFileInfo) {
-            $data[] = $splFileInfo->getBasename('.html');
+            $data[] = str_replace($baseDir, '', $splFileInfo->getPath()) . '/' . $splFileInfo->getBasename('.html');
         }
 
         $xmlString = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
         foreach ($data as $url) {
             $url = str_replace('index', '', $url);
-            $loc = "https://" . implode('/', array_filter([$this->config['domain'], $url]));
+            $loc = "https://" . $this->config['domain'] . $url;
             $xmlString .= "<url><loc>$loc</loc></url>";
         }
         $xmlString .= '</urlset>';

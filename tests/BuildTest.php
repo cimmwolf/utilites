@@ -75,7 +75,7 @@ class BuildTest extends TestCase
         $sitemapFilename = getcwd() . '/build/sitemap.xml';
         $this->assertFileExists($sitemapFilename);
         $this->assertXmlStringEqualsXmlString(
-            '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/template</loc></url></urlset>',
+            '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/subfolder/test</loc></url><url><loc>https://example.com/template</loc></url></urlset>',
             file_get_contents($sitemapFilename)
         );
     }
