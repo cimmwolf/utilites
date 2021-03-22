@@ -188,11 +188,8 @@ class AdaptiveImg
             $widths[] = $width * 3;
         }
 
-        if (!in_array($maxWidth, $widths)) {
-            $widths[] = $maxWidth;
-        }
-
         $widths = array_unique($widths);
+        $widths = array_diff($widths, [$maxWidth]);
         sort($widths);
 
         foreach ($widths as $width) {
@@ -200,6 +197,8 @@ class AdaptiveImg
                 $srcSet[] = preg_replace('#^(.*?)\.(jpe?g|png|gif)$#', "$1@{$width}x-.$2 {$width}w", $this->url);
             }
         }
+        $srcSet[] = "{$this->url} {$maxWidth}w";
+
         $htmlOptions['src'] = $this->url;
         $htmlOptions['alt'] = $this->alt;
         $htmlOptions['srcset'] = implode(', ', $srcSet);
