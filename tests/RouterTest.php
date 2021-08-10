@@ -9,9 +9,9 @@ class RouterTest extends TestCase
     {
         $output = Router::display(__DIR__ . '/fixtures/html/template.html');
 
-        $this->assertContains('@200x-.png', $output);
-        $this->assertContains('@210x-.png', $output);
+        $this->assertStringContainsString('@200x-.png', $output);
+        $this->assertStringContainsString('@210x-.png', $output);
 
-        $this->assertContains('<lazy-img', $output);
+        $this->assertStringContainsString('<lazy-img', $output);
     }
 }

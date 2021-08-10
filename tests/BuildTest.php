@@ -64,7 +64,7 @@ class BuildTest extends TestCase
         $splFile = iterator_to_array($finder, false)[0];
         $fileName = $splFile->getFileName();
 
-        $this->assertContains($fileName, file_get_contents(getcwd() . '/build/tests/fixtures/html/template.html'));
+        $this->assertStringContainsString($fileName, file_get_contents(getcwd() . '/build/tests/fixtures/html/template.html'));
     }
 
     public function testSitemap()
@@ -80,7 +80,7 @@ class BuildTest extends TestCase
         );
     }
 
-    protected function setUp()
+    protected function setUp() :void
     {
         (new Filesystem())->remove(getcwd() . '/build');
     }

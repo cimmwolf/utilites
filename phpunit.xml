@@ -1,6 +1,6 @@
 <phpunit stopOnFailure="false">
     <testsuites>
-        <testsuite>
+        <testsuite name="main">
             <directory suffix=".php">tests</directory>
         </testsuite>
     </testsuites>
