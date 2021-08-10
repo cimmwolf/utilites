@@ -241,7 +241,7 @@ class AdaptiveImg
                 $value = preg_replace('/^calc\((.*?)\)$/i', '$1', $value);
 
                 if (!is_numeric($value)) {
-                    $value = ceil(eval('return' . $value . ';'));
+                    $value = ceil(eval('return ' . $value . ';'));
                 }
                 $widths[] = (int)ceil($value);
             }
